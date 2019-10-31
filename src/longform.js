@@ -37,26 +37,25 @@ const createObject = (options) => {
         animations: [],
     }
 
+    if (!options) options = def;
 
 
-    let instance = new Sprite(resources[def.img].texture);
-    instance.width = def.width;
-    instance.height = def.height;
-    instance.position.set(def.posStart.x, def.posStart.y)
-    instance.alpha = def.alphaStart;
-    def.instance = instance;
-    console.log('aaaa')
+
+    let instance = new Sprite(resources[options.img].texture);
+    instance.width = options.width;
+    instance.height = options.height;
+    instance.position.set(options.posStart.x, options.posStart.y)
+    instance.alpha = options.alphaStart;
+    options.instance = instance;
+
     app.stage.addChild(instance);
-    console.log('bbbb')
 
+    items[options.name] = options
 
-
-    items[name] = def
-
-    let position = def.posStart;
+    let position = options.posStart;
     // Create a tween for position first
-    let tween_pos = new TWEEN.Tween(position)
-                    .to(def.posEnd, def.animationTime)
+    let tp = new TWEEN.Tween(position)
+                    .to(options.posEnd, options.animationTime)
                     .repeat(1)
                     .easing( TWEEN.Easing.Cubic.InOut )
                     .onUpdate(function(object) {
@@ -67,18 +66,18 @@ const createObject = (options) => {
     // Then tell the tween we want to animate the x property over 1000 milliseconds
 
     let alpha = {alpha: 0};
-    let tween_alpha = new TWEEN.Tween(alpha)
-                                .to({alpha: 1}, 1000)
-                                .repeat(1)
-                                .easing( TWEEN.Easing.Exponential.Out )
-                                .onUpdate(function(object) {
-                                    console.log('OBJ alpha: ',object.alpha);
-                                    instance.alpha = object.alpha;
-                                })
-                                .start()
+    let ta = new TWEEN.Tween(alpha)
+                    .to({alpha: 1}, 1000)
+                    .repeat(1)
+                    .easing( TWEEN.Easing.Exponential.Out )
+                    .onUpdate(function(object) {
+                        console.log('OBJ alpha: ',object.alpha);
+                        instance.alpha = object.alpha;
+                    })
+                    .start()
 
-    def.animations.push(tween_pos);
-    def.animations.push(tween_alpha);
+    options.animations.push(tp);
+    options.animations.push(ta);
 
 }
 
