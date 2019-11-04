@@ -5,8 +5,6 @@ const grid = {
 }
 
 
-
-
 const items = [];
 const itemData = {
   bg: {
@@ -25,8 +23,10 @@ const itemData = {
     alphaStart: 0,
     alphaEnd: 1,
     animationTime: 1000,
-    animations: [],
-    animationTriggered: false,
+    animationsIN: [],
+    animationsOUT: [],
+    animationTriggeredIN: false,
+    animationTriggeredOUT: false,
   },
   iconico: {
     name: "test",
@@ -44,8 +44,10 @@ const itemData = {
     alphaStart: 0,
     alphaEnd: 1,
     animationTime: 1000,
-    animations: [],
-    animationTriggered: false,
+    animationsIN: [],
+    animationsOUT: [],
+    animationTriggeredIN: false,
+    animationTriggeredOUT: false,
   },
   clevel: {
     name: "clevel",
@@ -63,8 +65,10 @@ const itemData = {
     alphaStart: 0,
     alphaEnd: 1,
     animationTime: 1000,
-    animations: [],
-    animationTriggered: false,
+    animationsIN: [],
+    animationsOUT: [],
+    animationTriggeredIN: false,
+    animationTriggeredOUT: false,
   },
   business: {
     name: "business",
@@ -82,8 +86,10 @@ const itemData = {
     alphaStart: 0,
     alphaEnd: 1,
     animationTime: 1000,
-    animations: [],
-    animationTriggered: false,
+    animationsIN: [],
+    animationsOUT: [],
+    animationTriggeredIN: false,
+    animationTriggeredOUT: false,
   },
   dissacrante: {
     name: "dissacrante",
@@ -101,8 +107,10 @@ const itemData = {
     alphaStart: 0,
     alphaEnd: 1,
     animationTime: 1000,
-    animations: [],
-    animationTriggered: false,
+    animationsIN: [],
+    animationsOUT: [],
+    animationTriggeredIN: false,
+    animationTriggeredOUT: false,
   },
   irriverente: {
     name: "irriverente",
@@ -120,8 +128,10 @@ const itemData = {
     alphaStart: 0,
     alphaEnd: 1,
     animationTime: 1000,
-    animations: [],
-    animationTriggered: false,
+    animationsIN: [],
+    animationsOUT: [],
+    animationTriggeredIN: false,
+    animationTriggeredOUT: false,
   },
   preciso: {
     name: "preciso",
@@ -139,8 +149,10 @@ const itemData = {
     alphaStart: 0,
     alphaEnd: 1,
     animationTime: 1000,
-    animations: [],
-    animationTriggered: false,
+    animationsIN: [],
+    animationsOUT: [],
+    animationTriggeredIN: false,
+    animationTriggeredOUT: false,
   },
 }
 
@@ -191,7 +203,7 @@ const createObject = options => {
   items[options.name] = options;
 
   let position = options.posStart;
-  let tp = new TWEEN.Tween(position)
+  let tpin = new TWEEN.Tween(position)
     .to(options.posEnd, options.animationTime)
     .easing(TWEEN.Easing.Cubic.InOut)
     .onUpdate(function(object) {
@@ -199,21 +211,46 @@ const createObject = options => {
       instance.y = object.y;
     })
     
-
   let alpha = { alpha: 0 };
-  let ta = new TWEEN.Tween(alpha)
+  let tain = new TWEEN.Tween(alpha)
     .to({ alpha: 1 }, 1000)
     .easing(TWEEN.Easing.Exponential.Out)
     .onUpdate(function(object, index) {
     //   console.log("OBJ alpha: ", object.alpha, index);
       instance.alpha = object.alpha;
+    }).onComplete(() => {
+      console.log('alpha complete: ', options.name)
     })
-    
-  options.animations.push(tp);
-  options.animations.push(ta);
 
-  // items.push(options);
-  
+
+
+
+  position = options.posEnd;
+  let tpout = new TWEEN.Tween(position)
+  .to(options.posStart, options.animationTime)
+  .easing(TWEEN.Easing.Cubic.InOut)
+  .onUpdate(function(object) {
+  //   console.log("OBJ Y: ", object.y);
+    instance.y = object.y;
+  })
+    
+  alpha = { alpha: options.alphaEnd };
+  let taout = new TWEEN.Tween(alpha)
+    .to({ alpha: options.alphaStart }, 1000)
+    .easing(TWEEN.Easing.Exponential.Out)
+    .onUpdate(function(object, index) {
+    //   console.log("OBJ alpha: ", object.alpha, index);
+      instance.alpha = object.alpha;
+    }).onComplete(() => {
+      console.log('alpha complete: ', options.name)
+    })
+
+
+
+  options.animationsIN.push(tpin);
+  options.animationsIN.push(tain); 
+  options.animationsOUT.push(tpout);
+  options.animationsOUT.push(taout); 
 };
 
 // INIT
@@ -264,23 +301,45 @@ function setup() {
 }
 
 
-function startTransition(scroll_pos) {
+function startTransitionIn(scroll_pos) {
   Object.values(items).forEach(item => {
-    if (!item.animations || item.animationTriggered) return;
+    if (!item.animationsIN || item.animationTriggeredIN) return;
     
-    item.animations.forEach(anim => {
+
+    item.animationsIN.forEach(anim => {
         console.log('##### STARTING TWEEN');
         anim.start();
-        item.animationTriggered = true;
+        item.animationTriggeredIN = true;
+        item.animationTriggeredOUT = false;
     })
   })
   animate();
 
 }
 
+function startTransitionOut(scroll_pos) {
+  Object.values(items).forEach(item => {
+    if (!item.animationsOUT || item.animationTriggeredOUT) return;
+    
+
+    item.animationsOUT.forEach(anim => {
+        console.log('##### STARTING TWEEN');
+        anim.start();
+        item.animationTriggeredOUT = true;
+        item.animationTriggeredIN = false;
+    })
+  })
+  animate();
+
+}
+
+
 document.body.addEventListener("wheel", function(event) {
   event.preventDefault();
-  startTransition(event.deltaY);
+  
+  if (event.deltaY > 0 ) return startTransitionIn(event.deltaY);
+  return startTransitionOut()
+
 });
 
 function animate() {
