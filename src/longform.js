@@ -157,6 +157,51 @@ const itemData = {
 }
 
 
+const scene = {
+  name: "1",
+  items, 
+  itemData,
+  prevScene: undefined,
+  nextScene: undefined,
+  isAnimating: 0,
+}
+
+
+
+
+const createAlphaTweeen = (start, end, duration, instance) => {
+  let alpha = { alpha: start };
+  let tw = new TWEEN.Tween(alpha)
+    .to({ alpha: end }, duration)
+    .easing(TWEEN.Easing.Exponential.Out)
+    .onUpdate(function(object, index) {
+      instance.alpha = object.alpha;
+    }).onComplete(() => {
+      scene.isAnimating -= 1;
+      if (!scene.isAnimating) console.log('END TWEENS')
+    })
+
+    return tw;
+}
+
+const createPositionTween = (start, end, duration, instance) => {
+  let position = start;
+  let tw = new TWEEN.Tween(position)
+    .to(end, duration)
+    .easing(TWEEN.Easing.Cubic.InOut)
+    .onUpdate(function(object) {
+    //   console.log("OBJ Y: ", object.y);
+      instance.y = object.y;
+    }).onComplete(() => {
+      scene.isAnimating -= 1;
+      if (!scene.isAnimating) console.log('END TWEENS')
+    })
+
+
+  return tw;
+}
+
+
 
 // ALIASES
 let Application = PIXI.Application,
@@ -202,50 +247,11 @@ const createObject = options => {
 
   items[options.name] = options;
 
-  let position = options.posStart;
-  let tpin = new TWEEN.Tween(position)
-    .to(options.posEnd, options.animationTime)
-    .easing(TWEEN.Easing.Cubic.InOut)
-    .onUpdate(function(object) {
-    //   console.log("OBJ Y: ", object.y);
-      instance.y = object.y;
-    })
     
-  let alpha = { alpha: 0 };
-  let tain = new TWEEN.Tween(alpha)
-    .to({ alpha: 1 }, 1000)
-    .easing(TWEEN.Easing.Exponential.Out)
-    .onUpdate(function(object, index) {
-    //   console.log("OBJ alpha: ", object.alpha, index);
-      instance.alpha = object.alpha;
-    }).onComplete(() => {
-      console.log('alpha complete: ', options.name)
-    })
-
-
-
-
-  position = options.posEnd;
-  let tpout = new TWEEN.Tween(position)
-  .to(options.posStart, options.animationTime)
-  .easing(TWEEN.Easing.Cubic.InOut)
-  .onUpdate(function(object) {
-  //   console.log("OBJ Y: ", object.y);
-    instance.y = object.y;
-  })
-    
-  alpha = { alpha: options.alphaEnd };
-  let taout = new TWEEN.Tween(alpha)
-    .to({ alpha: options.alphaStart }, 1000)
-    .easing(TWEEN.Easing.Exponential.Out)
-    .onUpdate(function(object, index) {
-    //   console.log("OBJ alpha: ", object.alpha, index);
-      instance.alpha = object.alpha;
-    }).onComplete(() => {
-      console.log('alpha complete: ', options.name)
-    })
-
-
+  let tpin = createPositionTween(options.posStart, options.posEnd, options.animationTime, instance);
+  let tpout = createPositionTween(options.posEnd, options.posStart, options.animationTime, instance);
+  let tain = createAlphaTweeen(options.alphaStart, options.alphaEnd, options.animationTime, instance);
+  let taout = createAlphaTweeen(options.alphaEnd, options.alphaStart, options.animationTime, instance);
 
   options.animationsIN.push(tpin);
   options.animationsIN.push(tain); 
@@ -290,53 +296,57 @@ function setup() {
   console.log(document.body.clientWidth + "x" + document.body.clientHeight);
   console.log(grid)
   
-  let center = new Sprite(loader.resources["bg"].texture);
-  center.width = window.innerWidth;
-  center.height = window.innerHeight;
-  app.stage.addChild(center);
 
-  Object.values(itemData).forEach(item => {
-   if (item.name !== 'bg') createObject(item)
-  })
+  Object.values(itemData).forEach(item => createObject(item))
 }
 
 
 function startTransitionIn(scroll_pos) {
+  if (scene.isAnimating) {
+    console.log('IS ANIMATING, return')
+    return;
+  }
   Object.values(items).forEach(item => {
     if (!item.animationsIN || item.animationTriggeredIN) return;
-    
 
+    
     item.animationsIN.forEach(anim => {
-        console.log('##### STARTING TWEEN');
-        anim.start();
-        item.animationTriggeredIN = true;
-        item.animationTriggeredOUT = false;
+      console.log('##### STARTING TWEEN');
+      anim.start();
+      scene.isAnimating += 1;
+      item.animationTriggeredIN = true;
+      item.animationTriggeredOUT = false;
     })
   })
-  animate();
 
+  animate();
 }
 
 function startTransitionOut(scroll_pos) {
+  if (scene.isAnimating) {
+    console.log('IS ANIMATING, return')
+    return;
+  }
+
   Object.values(items).forEach(item => {
     if (!item.animationsOUT || item.animationTriggeredOUT) return;
-    
 
     item.animationsOUT.forEach(anim => {
-        console.log('##### STARTING TWEEN');
-        anim.start();
-        item.animationTriggeredOUT = true;
-        item.animationTriggeredIN = false;
+      console.log('##### STARTING TWEEN');
+      anim.start();
+      scene.isAnimating += 1;
+      item.animationTriggeredOUT = true;
+      item.animationTriggeredIN = false;
     })
   })
-  animate();
 
+  animate();
 }
 
 
 document.body.addEventListener("wheel", function(event) {
   event.preventDefault();
-  
+  console.log('called wheel!')
   if (event.deltaY > 0 ) return startTransitionIn(event.deltaY);
   return startTransitionOut()
 
