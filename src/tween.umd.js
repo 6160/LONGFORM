@@ -230,7 +230,7 @@
 				this._valuesStartRepeat[property] = this._valuesStart[property] || 0;
 
 			}
-
+			console.log('????', this._object)
 			return this;
 
 		},
@@ -414,9 +414,12 @@
 				this._onStartCallbackFired = true;
 			}
 
+			// console.log('??', time, this._startTime, this._duration)
+
 			elapsed = (time - this._startTime) / this._duration;
 			elapsed = (this._duration === 0 || elapsed > 1) ? 1 : elapsed;
 
+			// console.log('?? elapsed ', elapsed)
 			value = this._easingFunction(elapsed);
 
 			for (property in this._valuesEnd) {
@@ -430,9 +433,9 @@
 				var end = this._valuesEnd[property];
 
 				if (end instanceof Array) {
-
+					
 					this._object[property] = this._interpolationFunction(end, value);
-
+					// console.log("?? interpolation ", this._object)
 				} else {
 
 					// Parses relative end values with start as base (e.g.: +10, -3)
@@ -448,6 +451,8 @@
 					// Protect against non numeric properties.
 					if (typeof (end) === 'number') {
 						this._object[property] = start + (end - start) * value;
+						// console.log("?? typeof ", this._object, value)
+
 					}
 
 				}
